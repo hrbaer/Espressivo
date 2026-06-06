@@ -1,0 +1,22 @@
+[
+  {
+    "title": "MuseScore Studio",
+    "description": "Music notation software",
+    "url": "https://musescore.org/"
+  },
+  {
+    "title": "Verovio",
+    "description": "A music notation engraving library",
+    "url": "https://www.verovio.org/index.xhtml"
+  },
+  {
+    "title": "Vite",
+    "description": "The build tool for the Web",
+    "url": "https://vite.dev/"
+  },
+  {
+    "title": "Vue.js",
+    "description": "The progressive JavaScript framework",
+    "url": "https://vuejs.org/"
+  }
+]

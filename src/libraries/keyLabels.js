@@ -1,0 +1,23 @@
+export default {
+    buttons: [
+        'a',
+        'b',
+        'x',
+        'y',
+        'leftshoulder',
+        'rightshoulder',
+        'lefttrigger',
+        'righttrigger',
+        'back',
+        'start',
+        'leftstick',
+        'rightstick',
+        'dpup',
+        'dpdown',
+        'dpleft',
+        'dpright',
+        'guide',
+    ],
+    axes: ['leftx', 'lefty', 'rightx', 'righty'],
+    sensor: ['girox', 'giroy', 'giroz', 'accelx', 'accely', 'accelz'],
+}

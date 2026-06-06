@@ -1,0 +1,28 @@
+2026-05-22
+✔️ Add MIDI input listener
+
+2026-05-24
+Need to correct <accid @accid> with Verovio version 6.2
+Add dpad to HID handler
+
+2026-05-28
+Returned to Verovio 6.0.1
+There are wrong <accid> elements
+
+2026-05-29
+✔️ Highlighting of the current note comes too early
+✔️ Tempo changes within a measure are completely left out
+
+2026-05-31
+Sound should stop immediately on pause
+After rewind repeats are ignored
+✔️ Count-in should hide title
+✔️ Articulation for staffs must be switched
+✔️ Stellen mit Sprüngen im 4. Satz der 6. Sinfonie
+
+2026-06-01
+Support multiple channels
+✔️ Change between barock and classic style using the gamepad
+
+2026-06-05
+✔️ Reload the score from a gamepad.

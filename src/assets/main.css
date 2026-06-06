@@ -1,0 +1,44 @@
+@import './base.css';
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body.wait,
+body.wait * {
+    cursor: wait !important;
+}
+
+#app {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-rows: 50px auto min-content;
+    transition: grid-template 1s ease-in-out;
+}
+
+@media (width >= 600px) {
+    #app {
+        grid-template-columns: var(--left-sidebar) var(--col-2-view) var(--col-3-view) var(
+                --col-4-view
+            );
+    }
+}
+
+@media (width < 600px) {
+    #app {
+        grid-template-columns: var(--col-1) var(--col-2) var(--col-3) var(--col-4);
+        position: relative;
+        overflow: clip;
+    }
+}
+
+@media (hover: hover) {
+    a:hover {
+        background-color: inherit;
+    }
+}
