@@ -26,8 +26,8 @@ import TransposeDialog from './components/TransposeDialog.vue'
 
 import MidiIO from './libraries/MidiIO.js'
 import GamepadHandler from './libraries/GamepadHandler.js'
-import ConverterService from './ConverterService.js'
-import meiParser from './mei-parser.js'
+import ConverterService from './libraries/ConverterService.js'
+import meiParser from './libraries/mei-parser.js'
 import { default as fileExtension } from 'file-extension'
 
 import Player from './libraries/Player.js'

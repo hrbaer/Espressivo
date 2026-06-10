@@ -24,6 +24,7 @@ defineProps(['work'])
     height: 100%;
     font-size: 4vw;
     padding-bottom: 10vh;
+    pointer-events: none;
 }
 
 .composer {

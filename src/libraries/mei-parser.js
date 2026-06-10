@@ -606,7 +606,7 @@ export default function (mei) {
                     {
                         const plist = xmlTools.getAttribute(node, 'plist')
                         if (plist != null) {
-                            let expansion = plist.split(' ').map((e) => e.code())
+                            const expansion = plist.split(' ').map((e) => e.code())
                             meta.expansions = meta.expansions ?? []
                             meta.expansions.push(expansion)
                         }

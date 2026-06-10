@@ -3,14 +3,17 @@
  * 2026-03-16
  */
 
+// Forces a value to be in a given range.
 Number.prototype.clamp = function (min, max) {
     return Math.min(Math.max(this, min), max)
 }
 
+// Number with 2 digits and leading zero.
 function n00(n) {
     return String(n).padStart(2, '0')
 }
 
+// Creates a copy of a note.
 function copyNote(note) {
     return {
         duration: note.duration,
@@ -26,18 +29,29 @@ function copyNote(note) {
     }
 }
 
+// Setting determines the execution of trills.
 const ornamentTypes = ['barock', 'classic']
 
 import Trill from './Trill.js'
 import Turn from './Turn.js'
 import Mordent from './Mordent.js'
 import LongMordent from './LongMordent.js'
-import { Kind, Fifths } from '../mei-parser.js'
+import { Kind, Fifths } from './mei-parser.js'
 
 const staccatoNotesRatio = 70 / 100
 const staccatissimoNotesRatio = 50 / 100
 const marcatoNotesRatio = 80 / 100
 
+/*
+ *  P L A Y E R
+ *
+ *  This is the heart of the app.
+ *  - Gets the parsed notes
+ *  - Runs the clock
+ *  - Processes controller input
+ *  - Creates MIDI events
+ *
+ */
 export default class Player {
     constructor() {
         this.currentMeasure = 0.0
@@ -70,23 +84,28 @@ export default class Player {
         this.currentSection = 0
     }
 
+    // Sets the parsed note data.
     setNoteData(noteData) {
         this.noteData = noteData
         this.resetPlayer()
     }
 
+    // Return the currently used note data.
     getNoteData() {
         return this.noteData
     }
 
+    // Sets the MIDI output and input handler.
     setMidiIO(midiIO) {
         this.midiIO = midiIO
     }
 
+    // Holds a reference to the player display
     setPlayerDisplay(playerDisplay) {
         this.playerDisplay = playerDisplay
     }
 
+    // Gets the next note.
     getNextNote() {
         // First look for pending ornamental notes
         const ornamentalNote = this.getOrnamentalNote()
@@ -105,31 +124,36 @@ export default class Player {
         }
     }
 
-    getPreviousNote() {
-        const previousNoteIndex = this.playingNotes.findIndex((note) => {
+    // Gets the note that needs to be stopped.
+    getStopNote() {
+        const stopNoteIndex = this.playingNotes.findIndex((note) => {
             return note.measure + note.duration * this.getArticulation(note) <= this.currentMeasure
         })
-        if (previousNoteIndex >= 0) {
-            return this.playingNotes.splice(previousNoteIndex, 1)[0]
+        if (stopNoteIndex >= 0) {
+            return this.playingNotes.splice(stopNoteIndex, 1)[0]
         }
     }
 
+    // Adds a note to the list of currently playing notes.
     addPlayingNote(note) {
         this.playingNotes.push(note)
     }
 
+    // Handles the playing of a note.
     handleNote(note) {
         note = this.articulateNote(note)
         this.playNote(note)
         this.addPlayingNote(note)
     }
 
+    // Finds a currently active setting
     findElement(elements, measure) {
         return elements.findLast((e) => {
             return e.measure <= measure
         })
     }
 
+    // Updates the currently acitve tempo.
     handleTempo(measure) {
         let element = this.findElement(this.noteData.tempi, measure)
         if (element) {
@@ -137,6 +161,7 @@ export default class Player {
         }
     }
 
+    // Updates the currently acitve measure.
     handleMeter(measure) {
         let element = this.findElement(this.noteData.meters, measure)
         if (element) {
@@ -145,6 +170,7 @@ export default class Player {
         }
     }
 
+    // Sets the current key.
     handleKey(measure) {
         let element = this.findElement(this.noteData.keys, measure)
         if (element) {
@@ -152,6 +178,7 @@ export default class Player {
         }
     }
 
+    // Handles the measure update.
     handleMeasure(measure) {
         this.handleTempo(measure.measure)
         this.handleMeter(measure.measure)
@@ -162,11 +189,13 @@ export default class Player {
         this.playerDisplay.key = Fifths[this.currentKey]
     }
 
+    // Returns the fraction of a measure since the last clock.
     getDeltaMeasure(deltaTime) {
         const meter = this.currentMeter.count / this.currentMeter.unit
         return (deltaTime * this.currentTempo * (1 + this.tempoRate / 100)) / (4 * meter * 60000)
     }
 
+    // Gets the number of beats.
     get numBeats() {
         return this.currentMeter.count
     }
@@ -180,7 +209,7 @@ export default class Player {
             const deltaMeasure = this.getDeltaMeasure(deltaTime)
             let note
             // Stop previous notes.
-            while ((note = this.getPreviousNote()) != null) {
+            while ((note = this.getStopNote()) != null) {
                 this.stopNote(note)
             }
             // Play next notes.
@@ -209,6 +238,7 @@ export default class Player {
         }
     }
 
+    // Processes a measure.
     processMeasure(measure) {
         // Handling of marker takes precedence
         if (this.pendingMarker == true) {
@@ -241,6 +271,8 @@ export default class Player {
         return this.processNotations(measure)
     }
 
+    // Processes notations.
+    // Notations are additional information for notes and measures
     processNotations(measure) {
         if (measure.notations?.length > 0) {
             const expansion = this.getExpansions()
@@ -273,6 +305,7 @@ export default class Player {
         return true
     }
 
+    // Processes instructions.
     processInstructionType(measure) {
         const param = this.getNotationValue(measure, 'type')
         if (param == null) {
@@ -355,6 +388,7 @@ export default class Player {
         }
     }
 
+    // Processes repeat end.
     processRepeatEndNotation(measure) {
         if (this.fromMarker == false) {
             if (this.hasNotation(measure, 'right', 'rptend')) {
@@ -384,6 +418,7 @@ export default class Player {
         return true
     }
 
+    // Processes start of ending.
     processStartEndingNotation(measure) {
         const startending = this.getNotationValue(measure, 'startending')
         if (startending != null) {
@@ -408,6 +443,7 @@ export default class Player {
         return true
     }
 
+    // Processes end of ending.
     processEndEndingNotation(measure) {
         const endending = this.getNotationValue(measure, 'endending')
         if (endending != null) {
@@ -420,6 +456,7 @@ export default class Player {
         }
     }
 
+    // Processes repeat starts.
     processRepeatStartNotation(measure) {
         if (this.hasNotation(measure, 'left', 'rptstart')) {
             this.repeatStartIndex = measure.index - 1
@@ -431,6 +468,7 @@ export default class Player {
         }
     }
 
+    // Processes the start of a section.
     processStartSection(section, expansion) {
         if (this.currentSection < expansion.count) {
             const id = expansion[this.currentSection]
@@ -445,6 +483,7 @@ export default class Player {
         }
     }
 
+    // Processes the end of a section.
     processEndSection(section, expansions) {
         this.currentSection += 1
         if (this.currentSection < expansions.length) {
@@ -459,6 +498,7 @@ export default class Player {
         }
     }
 
+    // For a given note the enclosing section is returned.
     findEnclosingSection() {
         return this.noteData?.notes.findLast((note) => {
             return (
@@ -469,6 +509,7 @@ export default class Player {
         })
     }
 
+    // Sets the repeat start.
     setRepeatStart() {
         // If there are expansions, we also have to set the current section.
         if (this.hasExpansions) {
@@ -479,10 +520,9 @@ export default class Player {
                     // We choose the first section contained in the expansion list
                     const expansion = this.getExpansions()
                     if (expansion != null) {
-                        this.currentSection =
-                            expansion.find((exp) => {
-                                return exp == label
-                            }) ?? 0
+                        this.currentSection = expansion.findIndex((exp) => {
+                            return exp == label
+                        })
                         this.setRepeatNumberFromSection()
                     }
                 }
@@ -497,41 +537,50 @@ export default class Player {
         }
     }
 
+    // Gets the expansions.
+    // Expansions tell what sections need to be playes.
     getExpansions() {
         return this.noteData.meta.expansions?.[0]
     }
 
+    // Checks if sections are available.
     get hasExpansions() {
         return this.noteData.meta.expansions?.length > 0
     }
 
+    // Gets the notation for a given key.
     getNotation(note, key) {
         return note.notations?.find((notation) => {
             return notation.params[key] != null
         })
     }
 
+    // Gets a notation value for a given key.
     getNotationValue(note, key) {
         return this.getNotation(note, key)?.params[key]
     }
 
+    // Checks if a notation includes a given key-value pair.
     hasNotation(note, key, value) {
         note.notations.includes((notation) => {
             return notation.params[key] == value
         })
     }
 
+    // Checks if an end notation exists.
     hasEndNotation(measure) {
         return (
             this.hasNotation(measure, 'right', 'end') || this.hasNotation(measure, 'right', 'dbl')
         )
     }
 
+    // Tells the player to jump to a given note.
     jumpToNote(index) {
         this.noteIndex = index
         this.currentMeasure = this.noteData?.notes[index].measure ?? 0.0
     }
 
+    // Tells the player to jump to the endd of the music piece.
     jumpToEnd() {
         const index = this.noteData?.notes.count
         if (index != null) {
@@ -539,6 +588,7 @@ export default class Player {
         }
     }
 
+    // Sets the repeat number for a given sections
     setRepeatNumberFromSection() {
         const expansion = this.getExpansions()
         if (expansion != null) {
@@ -552,6 +602,7 @@ export default class Player {
         }
     }
 
+    // Looks for a measure including a given key-value pair.
     findMeasureWithNotation(key, value) {
         return this.noteData?.notes.find((note) => {
             return (
@@ -563,6 +614,7 @@ export default class Player {
         })
     }
 
+    // Finds the currently active parameter.
     findParams(measure, params) {
         if (measure < params[0]?.measure || params.length == 1) {
             return params[0]
@@ -576,6 +628,7 @@ export default class Player {
         return params[index - 1]
     }
 
+    // Finds a previous repeats start.
     findPreviousRepeatStart() {
         const measure = this.noteData?.notes.findLast((note) => {
             return (
@@ -594,6 +647,7 @@ export default class Player {
         return null
     }
 
+    // Resets the player.
     resetPlayer() {
         this.running = false
         this.pausing = true
@@ -621,6 +675,11 @@ export default class Player {
         this.currentSection = 0
     }
 
+    /*
+     * Updates the player display.
+     */
+
+    // Sets the current play time.
     setPlaytime() {
         const playTime = this.currentTime
         const mins = Math.floor(playTime / 60000)
@@ -629,16 +688,26 @@ export default class Player {
         this.playerDisplay.time = `${mins}:${secs}.${tenths}`
     }
 
+    // Sets the number of beats
     setBeat() {
         const count = this.currentMeter.count
         const beat = Math.floor((this.currentMeasure % 1) * count) + 1
         this.playerDisplay.beat = beat
     }
 
+    // Sets the current bar number
     setBar() {
-        this.playerDisplay.bar = 1
+        this.playerDisplay.bar = this.currentNote.number
     }
 
+    // Updates the display.
+    updateDisplay() {
+        this.setPlaytime()
+        this.setBeat()
+        this.setBar()
+    }
+
+    // Sets the ornament type.
     setOrnamentType(ornamentType) {
         if (ornamentTypes.includes(ornamentType)) {
             this.ornamentType = ornamentType
@@ -646,16 +715,19 @@ export default class Player {
         }
     }
 
+    // Switches the ornament type.
     switchOrnamentType() {
         let index = ornamentTypes.indexOf(this.ornamentType)
         index = (index + 1) % ornamentTypes.length
         this.ornamentType = ornamentTypes[index]
     }
 
+    // Sends a stop event.
     sendStopEvent() {
         window.dispatchEvent(new CustomEvent('playstop'))
     }
 
+    // Starts running the player
     start() {
         if (!this.running) {
             this.playingNotes.splice(0)
@@ -666,12 +738,14 @@ export default class Player {
         this.pausing = false
     }
 
+    // Stops the player.
     stop() {
         this.soundOff()
         this.resetPlayer()
         this.sendStopEvent()
     }
 
+    // Starts of stops the player.
     startStop() {
         if (this.pausing) {
             this.start()
@@ -681,15 +755,18 @@ export default class Player {
         return !this.pausing
     }
 
+    // Pauses the player.
     pause() {
         this.pausing = true
         this.soundOff()
     }
 
+    // Resumes the player.
     resume() {
         this.pausing = false
     }
 
+    // Temporarily pauses the player when app is in background.
     sleep(state) {
         // Go to sleep
         if (state == true) {
@@ -704,48 +781,51 @@ export default class Player {
         }
     }
 
+    // Rewinds the player.
     rewind() {
         this.stop()
-        this.setPlaytime()
-        this.setBeat()
-        this.setBar()
+        this.updateDisplay()
         this.setRepeatStart()
     }
 
+    // Tell if the player is at the beginning.
     isAtBeginning() {
         return this.noteIndex == 0
     }
 
+    // Selects a note.
     selectNote(noteId) {
         const index = this.noteData.notes.findIndex((note) => {
             return note.id == noteId
         })
         if (index >= 0) {
             const note = this.noteData.notes[index]
+            this.currentTime = 0
             this.noteIndex = index
             this.currentMeasure = note.measure
+            this.currentNote = note
+            this.setRepeatStart()
+            this.updateDisplay()
         }
     }
 
+    // Selects a measure
     selectMeasure(measureId) {
-        const index = this.noteData.notes.findIndex((measure) => {
-            return measure.id == measureId
-        })
-        if (index >= 0) {
-            const measure = this.noteData.notes[index]
-            this.noteIndex = index
-            this.currentMeasure = measure.measure
-        }
+        // We do not distinguish between notes and measures.
+        this.selectNote(measureId)
     }
 
+    // Controls the tempo
     controlTempo(tempoRate) {
         this.tempoRate = tempoRate
     }
 
+    // Controls the velocity.
     controlVelocity(velocityValue) {
         this.velocityValues[0] = velocityValue
     }
 
+    // Controls the staff velocity.
     controlVelocityStaff(velocity, staff) {
         if (this.velocityValues[staff] == null) {
             this.velocityValues[staff] = []
@@ -753,6 +833,7 @@ export default class Player {
         this.velocityValues[staff][0] = velocity
     }
 
+    // Controls the staff and voice velocity.
     controlVelocityStaffVoice(velocity, staff, voice) {
         if (this.velocityValues[staff] == null) {
             this.velocityValues[staff] = []
@@ -760,21 +841,25 @@ export default class Player {
         this.velocityValues[staff][voice] = velocity
     }
 
+    // Controls the staff articulation.
     controlArticulationStaff(articulation, staff) {
         this.articulationRates[staff] = articulation
     }
 
+    // Controls the pedal
     controlPedal(which, pressed) {
         this.pedals[which] = pressed
         this.midiIO.setPedal(pressed)
     }
 
+    // Clears controller values.
     clearControllers() {
         this.velocityValues.splice(1)
         this.articulationRates.splice(0)
         this.pedals.splice(0)
     }
 
+    // Gets the velocity for a note.
     getVelocity(note) {
         return (
             this.velocityValues[0] +
@@ -783,6 +868,7 @@ export default class Player {
         )
     }
 
+    // Gets the articulation for a note.
     getArticulation(note) {
         return (
             1 -
@@ -791,7 +877,7 @@ export default class Player {
     }
 
     /// Articulates a note.
-    /// - Parameter note: the note to artivulate
+    /// - Parameter note: the note to articulate
     /// - Returns: The modified Note object
     articulateNote(note) {
         if (note.notations != null) {
@@ -910,16 +996,19 @@ export default class Player {
         }
     }
 
+    // Plays a note
     playNote(note) {
         const velocity = Math.round(this.getVelocity(note))
         this.midiIO?.noteOn(note.midi, 0, velocity)
         this.currentNote = note
     }
 
+    // Stops a note
     stopNote(note) {
         this.midiIO?.noteOff(note.midi, 0)
     }
 
+    // Turns the sound off.
     soundOff() {
         // console.log('sound off')
         // this.midiIO?.changeControl(120, 0)
