@@ -1,28 +1,26 @@
 //
-//  LongMordent.swift
-//  Espressivo
-//
-//  Created by Hansruedi Bär on 17.09.23.
+//  LongMordent.js
+//  Adapted code from the Xcode project.
 //
 
 import Ornament from './Ornament.js'
 
-/// Creates long mordent notes on the fly.
+// Creates long mordent notes on the fly.
 export default class LongMordent extends Ornament {
-    /// Initializes a long mordent.
-    /// - Parameters:
-    ///   - note: The Note object
-    ///   - numBeats: The number of beats
-    ///   - beatTime: The beat time
-    ///   - midi: The MIDI pitch value
-    ///   - delay: The delay between the ornamental notes
+    // Initializes a long mordent.
+    // - Parameters:
+    //   - note: The Note object
+    //   - numBeats: The number of beats
+    //   - beatTime: The beat time
+    //   - midi: The MIDI pitch value
+    //   - delay: The delay between the ornamental notes
     constructor(note, numBeats, beatTime, midi, delay) {
         super(note, numBeats, beatTime, delay)
         this.midi = midi
         this.addOrnamentalNotes()
     }
 
-    /// Adds the ornamental notes.
+    // Adds the ornamental notes.
     addOrnamentalNotes() {
         let n = this.estimateNumOrnamentalNotes()
         const duration = this.note.duration / n

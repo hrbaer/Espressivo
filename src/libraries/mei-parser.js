@@ -1,10 +1,19 @@
+/*
+ *  M E I - P A R S E R
+ *
+ *  Parses a MEI file.
+ *
+ */
+
 import xmlTools from './xml-tools.js'
 import Music from './Music.js'
 
+// Just skips the first character.
 String.prototype.code = function () {
     return this.substring(1)
 }
 
+// Defines the type of notes.
 export const Kind = Object.freeze({
     note: 0,
     rest: 1,
@@ -12,6 +21,7 @@ export const Kind = Object.freeze({
     invalid: 3,
 })
 
+// Describes the fifths code.
 export const Fifths = Object.freeze({
     '7f': 'C♭/a♭',
     '6f': 'G♭/e♭',
@@ -30,13 +40,15 @@ export const Fifths = Object.freeze({
     '7s': 'C♯/a♯',
 })
 
-export default function (mei) {
+// Parses a MEI document.
+export default function (mei, file) {
     const parser = new DOMParser()
 
     const doc = parser.parseFromString(mei, 'text/xml')
-    return parseMEI(doc)
+    return parseMEI(doc, file)
 
-    function parseMEI(doc) {
+    // Internal parser function.
+    function parseMEI(doc, file) {
         // Maps accidental codes to MIDI pitch differences.
         const midiAccidentals = Object.freeze({
             ff: -2,
@@ -58,9 +70,14 @@ export default function (mei) {
             G: 19,
         })
 
+        // Returns a numeric value for the fifths code.
         function fifthValue(fifth) {
             fifth = fifth ?? '0'
             return fifth?.length < 2 ? 0 : Number(fifth[0]) * (fifth[1] == 'f' ? -1 : 1)
+        }
+
+        function getName(file) {
+            return file.substring(file.lastIndexOf('/') + 1)
         }
 
         const shortNoteLength = 80
@@ -99,7 +116,7 @@ export default function (mei) {
         let position = 0.0
         let maxPosition = 0.0
         let tuplet
-        let meta = { numStaffs: 0, titles: [] }
+        let meta = { numStaffs: 0, titles: [], composer: getName(file) }
         let role
         let number = 0
         let beam = false
@@ -144,9 +161,9 @@ export default function (mei) {
             if (attrs) {
                 // FIXME: consider dotted notes.
                 if (!quarterDivs) {
-                    let ppq = attrs['dur.ppq']
-                    let dur = attrs['dur']
-                    if (ppq && dur) {
+                    const ppq = attrs['dur.ppq']
+                    const dur = attrs['dur']
+                    if (ppq != null && dur != null) {
                         quarterDivs = 0.25 * Number(ppq) * Number(dur)
                         divisions = getDivisionsPerMeasure()
                     }
@@ -190,12 +207,12 @@ export default function (mei) {
         // Converts a tstamp2 attribute to a duration.
         function tstamp2ToDuration(tstamp2, index) {
             let duration
-            let parts = tstamp2.split('m')
-            let measures = Number(parts[0])
-            let beats = Number(parts[1])
+            const parts = tstamp2.split('m')
+            const measures = Number(parts[0])
+            const beats = Number(parts[1])
             if (!isNaN(measures) && !isNaN(beats)) {
-                let fp = notes[index].measure % 1
-                let meter = currentMeter ?? { count: 4 }
+                const fp = notes[index].measure % 1
+                const meter = currentMeter ?? { count: 4 }
                 duration = measures + (beats - 1.0) / meter.count - fp
             }
             return duration
@@ -218,7 +235,7 @@ export default function (mei) {
                 dur = Number(attrs['dur'])
                 if (!isNaN(dur)) {
                     duration = 1.0 / dur
-                    let dots = Number(attrs['dots'])
+                    const dots = Number(attrs['dots'])
                     if (!isNaN(dots)) {
                         if (dots == 1) {
                             duration = 1.5 * duration
@@ -237,28 +254,16 @@ export default function (mei) {
 
         // Adds a notation.
         function addNotation(attrs, keys) {
-            let notation = { params: {} }
-            for (let key of keys) {
-                let value = attrs[key]
-                if (value) {
+            const notation = { params: {} }
+            for (const key of keys) {
+                const value = attrs[key]
+                if (value != null) {
                     notation.params[key] = value
                 }
             }
             return notation
         }
 
-        /*
-    /// Adds all attributes to a notation object.
-    /// - Parameter attrs: The attribvutes of a note
-    /// - Returns: A notation object containing all the attributes
-    private func addNotation(_ attrs: Attrs) -> Notation {
-        var notation = Notation()
-        for attr in attrs {
-            notation.params[attr.key] = attr.value
-        }
-        return notation
-    }
-    */
         // Checks if a notation contains a given key-value pair.
         function hasNotation(notation, key, value) {
             // return notation.params.find((e) => e.key == key && e.value == value) != null
@@ -267,34 +272,34 @@ export default function (mei) {
 
         // Adds an ornament from name and attributes.
         function addOrnament(name, attrs) {
-            let notation = addNotation(attrs, ['staff', 'form', 'long'])
+            const notation = addNotation(attrs, ['staff', 'form', 'long'])
             notation.params['ornament'] = name
             const ref = findNoteRef(attrs)
             const index = noteRefs[ref]
             if (ref != null && index != null) {
-                let tstamp2 = attrs['tstamp2']
+                const tstamp2 = attrs['tstamp2']
                 if (tstamp2 != null) {
-                    let duration = tstamp2ToDuration(tstamp2, index)
+                    const duration = tstamp2ToDuration(tstamp2, index)
                     if (duration != null) {
                         notation.params['duration'] = String(duration)
                     }
                 }
-                let accidupper = attrs['accidupper']
+                const accidupper = attrs['accidupper']
                 if (accidupper != null) {
                     notation.params['accidupper'] = accidupper
                 }
-                let accidlower = attrs['accidlower']
+                const accidlower = attrs['accidlower']
                 if (accidlower != null) {
                     notation.params['accidlower'] = accidlower
                 }
                 addOrnamentIndex(notation, index)
             } else {
-                let startid = attrs['startid']
+                const startid = attrs['startid']
                 if (startid != null) {
-                    let chord = chords.find((e) => e.ref === startid.code())
+                    const chord = chords.find((e) => e.ref === startid.code())
                     if (chord != null) {
-                        for (let ref in chord.refs) {
-                            let index = noteRefs[ref]
+                        for (const ref in chord.refs) {
+                            const index = noteRefs[ref]
                             if (index != null) {
                                 addOrnamentIndex(notation, index)
                             }
@@ -307,11 +312,11 @@ export default function (mei) {
         // Adds an ornament from notation and note index.
         function addOrnamentIndex(notation, index) {
             notation = structuredClone(notation)
-            let midi = notes[index].midi
-            let fifths = fifthValue(currentKey.fifths)
-            let delay = time2duration(shortNoteLength)
-            let accidupper = notation.params['accidupper']
-            let accidlower = notation.params['accidlower']
+            const midi = notes[index].midi
+            const fifths = fifthValue(currentKey.fifths)
+            const delay = time2duration(shortNoteLength)
+            const accidupper = notation.params['accidupper']
+            const accidlower = notation.params['accidlower']
             notation.params['upper'] = String(Music.upperDiatone(midi, fifths, accidupper))
             notation.params['lower'] = String(Music.lowerDiatone(midi, fifths, accidlower))
             notation.params['delay'] = String(delay)
@@ -337,9 +342,9 @@ export default function (mei) {
 
         // Creates a relative tuplet duration.
         function makeTuplet(attrs) {
-            let num = Number(attrs['num'])
+            const num = Number(attrs['num'])
             if (!isNaN(num)) {
-                let numBase = Number(attrs['numBase'])
+                const numBase = Number(attrs['numBase'])
                 if (!isNaN(numBase)) {
                     tuplet = { value: numBase / num }
                 }
@@ -349,14 +354,14 @@ export default function (mei) {
         // Tries to find a note index from measure and staff.
         function findNoteRef(attrs) {
             let ref
-            let startid = attrs['startid']
+            const startid = attrs['startid']
             if (startid != null) {
                 ref = startid.code()
             } else {
-                let tstamp = Number(attrs, 'tstamp')
+                const tstamp = Number(attrs, 'tstamp')
                 if (!isNaN(tstamp)) {
-                    let measure = tstampToMeasure(tstamp)
-                    let note = findNote(measure, parseInt(attrs, 'staff'))
+                    const measure = tstampToMeasure(tstamp)
+                    const note = findNote(measure, parseInt(attrs, 'staff'))
                     if (note != null) {
                         ref = note.id
                     }
@@ -382,14 +387,14 @@ export default function (mei) {
 
         // Expands fingered tremolo notes.
         function expandFingeredTremoloNotes() {
-            let beams = tremolo.notation.params['beams']
+            const beams = tremolo.notation.params['beams']
             if (beams != null) {
-                let measure = tremolo.notes[0].measure
-                let duration = tremolo.notes[0].duration
+                const measure = tremolo.notes[0].measure
+                const duration = tremolo.notes[0].duration
                 if (measure != null && duration != null) {
-                    let meter = getMeter()
-                    let n = Math.round(duration * meter * (4 << parseInt(beams)))
-                    let f = 1.0 / n
+                    const meter = getMeter()
+                    const n = Math.round(duration * meter * (4 << parseInt(beams)))
+                    const f = 1.0 / n
                     for (let i = 0; i < n; i++) {
                         for (const note of tremolo.notes) {
                             const noteCopy = Object.assign({}, note)
@@ -408,19 +413,19 @@ export default function (mei) {
 
         // Expands bowed tremolo notes.
         function expandBowedTremoloNotes() {
-            let params = tremolo.notation?.params
+            const params = tremolo.notation?.params
             if (params != null) {
-                let measure = tremolo.notes[0].measure
-                let duration = tremolo?.notes[0].duration
+                const measure = tremolo.notes[0].measure
+                const duration = tremolo?.notes[0].duration
                 if (measure != null && duration != null) {
                     let stemMod = parseInt(params['stem.mod']?.[0])
                     stemMod = isNaN(stemMod) ? 1 : stemMod
-                    let meter = getMeter()
+                    const meter = getMeter()
                     let n = parseInt(duration * meter * (4 << stemMod))
                     if (tuplet != null) {
                         n = parseInt(n / tuplet.value)
                     }
-                    let f = 1.0 / n
+                    const f = 1.0 / n
                     for (let i = 0; i < n; i++) {
                         for (const note of tremolo.notes) {
                             const noteCopy = Object.assign({}, note)
@@ -442,23 +447,24 @@ export default function (mei) {
         }
         const version = xmlTools.getAttribute(root, 'meiversion')
         console.log(`MEI version ${version}`)
-        let children = root.childNodes
-        for (let i in children) {
-            let child = children[i]
+        const children = root.childNodes
+        for (const i in children) {
+            const child = children[i]
             if (child.nodeType === Node.ELEMENT_NODE) {
                 recursiveParser(child, startElement, endElement)
             }
         }
         processNotes()
 
+        // Recursively runs the parser.
         function recursiveParser(node, startElement, endElement) {
             if (node.nodeType === Node.ELEMENT_NODE) {
                 if (startElement) {
                     startElement(node)
                 }
-                let children = node.childNodes
-                for (let i in children) {
-                    let child = children[i]
+                const children = node.childNodes
+                for (const i in children) {
+                    const child = children[i]
                     recursiveParser(child, startElement, endElement)
                 }
                 if (endElement) {
@@ -504,7 +510,7 @@ export default function (mei) {
                                         refIndex < chord.refs.length;
                                         refIndex++
                                     ) {
-                                        let index = noteRefs[chord.refs[refIndex]]
+                                        const index = noteRefs[chord.refs[refIndex]]
                                         if (index) {
                                             noteIndices.push(index)
                                         }
@@ -515,8 +521,8 @@ export default function (mei) {
                                 noteIndices.sort((note0, note1) => note0.midi - note1.midi)
                                 let num = 0
                                 for (const index of noteIndices) {
-                                    let delay = time2duration(shortNoteLength)
-                                    var notation = { params: {} }
+                                    const delay = time2duration(shortNoteLength)
+                                    const notation = { params: {} }
                                     notation.params['reposition'] = node.nodeName
                                     notation.params['index'] = `${num}/${total}`
                                     notation.params['delay'] = `${delay}`
@@ -703,6 +709,9 @@ export default function (mei) {
                         count: xmlTools.getAttributeValue(node, 'count', 4),
                         unit: xmlTools.getAttributeValue(node, 'unit', 4),
                     }
+                    if (currentMeter.count == 0) {
+                        currentMeter.count = currentMeter.unit
+                    }
                     meters.push(currentMeter)
                     break
 
@@ -780,20 +789,15 @@ export default function (mei) {
                             staff: staff,
                             voice: currentMeasure.voice ?? 1,
                         }
-                        if (!currentChord) {
+                        if (currentChord == null) {
                             position += duration
                         }
                         const ref = attrs['xml:id']
                         if (ref != null) {
                             noteRefs[ref] = notes.length
                         }
-                        let grace = attrs['grace']
-                        if (!grace && currentChord) {
-                            if (currentChord.attributes) {
-                                grace = currentChord.attributes['grace']
-                            }
-                        }
-                        if (grace) {
+                        const grace = attrs['grace'] ?? currentChord?.attrs['grace']
+                        if (grace != null) {
                             const notation = { params: {} }
                             notation.params['grace'] = grace
                             if (grace == 'acc') {
@@ -801,11 +805,10 @@ export default function (mei) {
                                 if (beam == true) {
                                     currentNote.measure += number * 1e-6
                                 }
-                                let durAttr = xmlTools.getAttribute(node, 'dur')
-                                if (!durAttr && currentChord) {
-                                    durAttr = currentChord.getAttribute(node, 'dur', '1')
-                                }
-
+                                const durAttr =
+                                    xmlTools.getAttribute(node, 'dur') ??
+                                    currentChord?.attrs['dur'] ??
+                                    '1'
                                 const dur = parseInt(durAttr)
                                 const divs = getDivisions(dur)
                                 const duration = beam
@@ -814,7 +817,7 @@ export default function (mei) {
                                 notation.params['steal'] = beam ? 'prev' : 'next'
                                 notation.params['duration'] = String(duration)
                                 const chord = currentChord
-                                if (chord) {
+                                if (chord != null) {
                                     notation.params['chord'] = chord.ref
                                 }
                             } else if (grace == 'unacc') {
@@ -827,7 +830,7 @@ export default function (mei) {
                         } else {
                             number = 0
                         }
-                        let visible = attrs['visible']
+                        const visible = attrs['visible']
                         if (visible == 'false') {
                             const notation = addNotation(attrs, ['visible'])
                             currentNote.notations = currentNote.notations ?? []
@@ -881,7 +884,7 @@ export default function (mei) {
                         if (ppq != null) {
                             quarterDivs = ppq
                         }
-                        let midiBpm = xmlTools.getAttributeValue(node, 'midi.bpm')
+                        const midiBpm = xmlTools.getAttributeValue(node, 'midi.bpm')
                         if (midiBpm != null) {
                             tempi.push({
                                 measure: measureNum,
@@ -1046,7 +1049,7 @@ export default function (mei) {
                         // Add articulations to chord notes
                         const artic = chord.attrs['artic']
                         if (artic) {
-                            var notation = { params: {} }
+                            const notation = { params: {} }
                             notation.params['artic'] = artic
                             for (const ref in chord.refs) {
                                 const index = noteRefs[ref]
@@ -1415,7 +1418,7 @@ export default function (mei) {
             notes = notes.filter((e) => e.kind != Kind.invalid)
         }
 
-        /// Repositions note and adjust for incomplete measures.
+        /// Repositions note and adjusts for incomplete measures.
         /// - Parameters:
         ///   - index: The index of the note
         ///   - duration: The duration of the note
@@ -1539,8 +1542,7 @@ export default function (mei) {
         /// Shortens repeated notes.
         ///
         /// A note is shortened if it is repeated.
-        /// - How much a note will be shortened is controled by the preferences
-        /// - The maximum shortening is currently fixed to a value 0.25
+        /// - The maximum shortening is currently set to a value 0.25
         function shortenRepeatedNotes() {
             const reductionLimit = 0.25
             let previousMeasure = Number.MAX_VALUE
@@ -1550,7 +1552,7 @@ export default function (mei) {
                     if (getNotationByParam(note, 'artic') == null) {
                         if (isSameMeasure(previousMeasure, note.measure)) {
                             if (note.midi == notes[index - 1].midi) {
-                                let duration = notes[index - 1].duration
+                                const duration = notes[index - 1].duration
                                 if (duration > 0) {
                                     let reduction = Math.min(reductionLimit, duration * percentage)
                                     notes[index - 1].duration -= reduction
@@ -1613,7 +1615,7 @@ export default function (mei) {
 
         /// Removes duplicates.
         ///
-        /// The shorter notes are removed since ``sortNotesByMeasure()``
+        /// The shorter notes are removed since sortNotesByMeasure()
         /// already considered the note length.
         function removeDuplicates() {
             // Make sure the notes are already sorted.
@@ -1630,7 +1632,7 @@ export default function (mei) {
                         return false
                     }
                     // remove notes with lower measures
-                    let prevNote = prevNotes.slice(-1)
+                    const prevNote = prevNotes.slice(-1)
                     if (prevNote != null) {
                         if (currNote.measure > prevNote.measure) {
                             prevNotes.splice(0)
@@ -1674,7 +1676,7 @@ export default function (mei) {
         ///
         /// Note that we use the midi field of the measure to store tempo changes.
         function addTempi() {
-            var currentTempo = 0
+            let currentTempo = 0
             for (const [index, _] of notes.entries()) {
                 if (notes[index].kind == Kind.measure) {
                     const tempo = tempi.find((e) => {
@@ -1710,7 +1712,7 @@ export default function (mei) {
         ///
         /// Note that we use the voice field of the measure to store key numbers.
         function addKeys() {
-            var currentKey = 0
+            let currentKey = 0
             for (const [index, _] of notes.entries()) {
                 if (notes[index].kind == Kind.measure) {
                     const key = keys.find((e) => {
@@ -1726,7 +1728,7 @@ export default function (mei) {
 
         /// Adds instructions.
         ///
-        /// Note that we use the number field of the measure to store instructions
+        /// Note that we use the number field of the measure to store instructions.
         function addInstructions() {
             for (const [index, note] of notes.entries()) {
                 const instructions = []
@@ -1771,7 +1773,7 @@ export default function (mei) {
                                         }
                                         break
                                     default:
-                                        console.log('Unhandled instruction:', param)
+                                    // console.log('Unhandled instruction:', param)
                                 }
                             }
                         }
@@ -1796,54 +1798,8 @@ export default function (mei) {
                     })
             }
         }
-        /*
-    /// Prints a note.
-    ///
-    /// Mainly for debugging.
-    func printNote(_ note: Note) {
-        print(
-            String(format: "%10.4f", note.measure, note.midi),
-            "   \(note.pitch.padding(toLength: 3, withPad: "   ", startingAt: 0))",
-            String(format: "%8.4f %3i %3i", note.duration, note.staff, note.voice),
-            note.kind
-        )
-    }
 
-    /// Prints notes.
-    ///
-    /// Mainly for debugging.
-    func printNotes() {
-        for note in notes {
-            printNote(note)
-        }
-    }
-
-    /// Prints notations.
-    ///
-    /// Mainly for debugging.
-    func printNotations() {
-        for note in notes {
-            if !note.notations.isEmpty {
-                print("Notation at \(note.pitch) \(note.measure)")
-                for notation in note.notations {
-                    for param in notation.params {
-                        print("\t\(param)")
-                    }
-                }
-            }
-        }
-    }
-
-    /// Prints verses.
-    ///
-    /// Mainly for debugging.
-    func printVerses() {
-        for verse in verses {
-            print(verse.key)
-            print(verse.value)
-        }
-    }
-*/
+        // Processes the parsed notes.
         function processNotes() {
             console.log('Processing score data started at', new Date().toLocaleTimeString())
 

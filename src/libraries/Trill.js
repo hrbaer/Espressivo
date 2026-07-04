@@ -1,9 +1,8 @@
 //
-//  Trill.swift
-//  Espressivo
+//  Trill.js
+//  Adapted code from the Xcode project.
 //
-//  Created by Hansruedi Bär on 17.09.23.
-//
+
 import Ornament from './Ornament.js'
 
 /// Creates trill notes on the fly.

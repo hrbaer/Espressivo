@@ -1,3 +1,9 @@
+/*
+ *  P L A Y L I S T
+ *
+ *  Creates a playlist from playlist files.
+ */
+
 export { loadPlaylist, formatTime, totalPlayTime }
 
 // Adds leading zeros.

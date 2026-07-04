@@ -1,3 +1,9 @@
+/*
+ * N A V I G A T I O N
+ *
+ * Handles app navigation and view layout.
+ */
+
 const cssVariables = ['--col-1', '--col-2', '--col-3', '--col-4']
 const sizeOn = '1fr'
 const sizeOff = '0fr'
@@ -14,8 +20,6 @@ function moveBack() {
 }
 
 function moveForward() {
-    getNumPanels()
-
     const values = getCssVariables()
     values.pop()
     values.unshift(sizeOff)
@@ -82,11 +86,6 @@ function setViewLayout(col2val, col3val, col4val) {
     setRootProperty('--col-2-view', col2val)
     setRootProperty('--col-3-view', col3val)
     setRootProperty('--col-4-view', col4val)
-}
-
-function getNumPanels() {
-    const navigationPanel = document.querySelector('div.navigation-panel')
-    console.log(navigationPanel)
 }
 
 export default {

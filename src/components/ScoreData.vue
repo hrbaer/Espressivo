@@ -1,6 +1,5 @@
 <script setup>
 import { onMounted, inject, computed } from 'vue'
-import { PrettyXml } from 'pretty-xml-vue3'
 import XmlViewer from 'vue3-xml-viewer'
 import 'pretty-xml-vue3/style.css'
 

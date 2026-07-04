@@ -101,7 +101,7 @@ async function loadCoverFiles(coverFiles) {
 }
 
 function isCoverImage(coverFile) {
-    return ['jpg', 'jpeg', 'png'].includes(fileExtension(coverFile.name))
+    return ['jpg', 'jpeg', 'png', 'svg'].includes(fileExtension(coverFile.name))
 }
 
 function isCoverText(coverFile) {

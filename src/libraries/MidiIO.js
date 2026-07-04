@@ -1,29 +1,37 @@
+/*
+ * M I D I I O
+ *
+ * Handles MIDI input and output.
+ *
+ */
+
 import notify from './notify.js'
 
 export default class MidiIO {
-    midiAccess
-
+    // Passes a reference to the MIDI connections.
     constructor(midiInput, midiOutput) {
         this.midiInput = midiInput
         this.midiOutput = midiOutput
     }
 
+    // Checks if MIDI is available.
     get hasMidi() {
         return window.navigator.requestMIDIAccess != null
     }
 
+    // Initializes MIDI input and output.
     async initialize() {
         await this.queryPermission()
         window.navigator
-            .requestMIDIAccess({ sysex: false })
+            .requestMIDIAccess({ software: true })
             .then(this.onMIDISuccess.bind(this), this.onMIDIFailure.bind(this))
     }
 
+    // Handles MIDI connection changes.
     onMIDISuccess(midiAccess) {
         midiAccess.onstatechange = function (e) {
-            let options = { body: `${e.port.name}: ${e.port.connection}, ${e.port.state}` }
+            let options = { body: `${e.port.name}: (${e.port.connection}, ${e.port.state})` }
             notify('MIDI connection changed', options)
-            console.log('MIDI connection changed', options)
             this.updateMidiOutput()
             this.updateMidiInput()
         }.bind(this)
@@ -32,34 +40,23 @@ export default class MidiIO {
         this.updateMidiInput()
     }
 
+    // Inform when an error occurred.
     onMIDIFailure(msg) {
         console.error('Failed to get MIDI access:', msg)
     }
 
+    // Updates the MIDI output reference.
     updateMidiOutput() {
         this.midiOutput.splice(0)
         this.midiAccess.outputs.forEach((e) => {
             this.midiOutput.push(e)
-            /*
-            e.onstatechange = function (event) {
-                const port = event.port
-                console.log(
-                    'MIDIOutputPort onstatechange name:' +
-                        port.name +
-                        ' connection:' +
-                        port.connection +
-                        ' state:' +
-                        port.state,
-                )
-            }
-            */
         })
     }
 
+    // Updates the MIDI input reference
     updateMidiInput() {
         this.midiInput.splice(0)
         this.midiAccess.inputs.forEach((e) => {
-            // const inp = { id: e.id, name: e.name, active: false }
             this.midiInput.push(e)
             if (e.connection == 'open') {
                 e.onmidimessage = this.midiInputHandler
@@ -67,6 +64,7 @@ export default class MidiIO {
         })
     }
 
+    // Handles MIDI input events.
     midiInputHandler(message) {
         const midiEvent = {
             channel: message.data.at(0),
@@ -80,10 +78,12 @@ export default class MidiIO {
         )
     }
 
+    // Adds a MIDI input handler.
     addMidiInputHandler(midiInput) {
         midiInput.addEventHandler('midimessage', this.midiInputHandler.bind(this))
     }
 
+    // Gets permission to use MIDI
     async queryPermission() {
         try {
             return await window.navigator.permissions
@@ -101,6 +101,7 @@ export default class MidiIO {
         }
     }
 
+    // Sends a MIDI message.
     sendMessage(msg) {
         for (const midiOut of this.midiOutput) {
             if (midiOut.connection == 'open') {
@@ -110,10 +111,12 @@ export default class MidiIO {
         }
     }
 
+    // Sends a MIDI note-on event.
     noteOn(key, channel, velocity) {
         this.sendMessage([0x90 + channel, key, velocity])
     }
 
+    // Sends a MIDI note-off event.
     noteOff(key, channel) {
         this.sendMessage([0x80 + channel, key, 0])
     }
@@ -160,6 +163,7 @@ export default class MidiIO {
         this.changeControl(0x40, value)
     }
 
+    // Sends a MIDI control change event.
     changeControl(controller, value) {
         this.sendMessage([0xb0, controller, value])
     }

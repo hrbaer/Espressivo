@@ -1,5 +1,8 @@
 /*
  *  L O G F I L E
+ *
+ *  Collects information and log data for each visited score file.
+ *
  */
 
 export default class LogFile {

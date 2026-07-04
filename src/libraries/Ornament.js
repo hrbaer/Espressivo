@@ -1,8 +1,6 @@
 //
-//  Ornament.swift
-//  Espressivo
-//
-//  Created by Hansruedi Bär on 25.06.23.
+//  Ornament.js
+//  Adapted code from the Xcode project.
 //
 
 /// Creates ornamental notes on the fly.

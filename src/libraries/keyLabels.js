@@ -1,3 +1,5 @@
+// A list of gamepad key labels.
+
 export default {
     buttons: [
         'a',

@@ -27,6 +27,15 @@ defineProps(['work'])
     pointer-events: none;
 }
 
+.content {
+    backdrop-filter: blur(20px);
+    box-shadow: rgba(100, 100, 111, 0.25) 0px 7px 29px 0px;
+    border-radius: 0.5em;
+    justify-content: center;
+    margin: auto;
+    padding: 3vh 4vw 5vh 4vw;
+}
+
 .composer {
     font-size: 4vw;
     font-weight: 600;
@@ -37,14 +46,5 @@ defineProps(['work'])
     font-size: 3vw;
     font-weight: 300;
     text-align: center;
-}
-
-.content {
-    backdrop-filter: blur(20px);
-    box-shadow: rgba(100, 100, 111, 0.25) 0px 7px 29px 0px;
-    border-radius: 0.5em;
-    justify-content: center;
-    margin: auto;
-    padding: 1em;
 }
 </style>

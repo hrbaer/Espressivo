@@ -23,7 +23,7 @@ function toggleInfo() {
         <div v-if="showIcon == true" class="content">
             <img
                 @click="toggleInfo"
-                alt="Vue logo"
+                alt="Espressivo logo"
                 class="logo"
                 src="@/assets/EspressivoIcon.svg"
             />

@@ -93,26 +93,9 @@ function select(inOut, event) {
                 @play-note="playNote"
                 @stop-note="stopNote"
             />
-            <!--
-            <hr />
-            <button @click="clearLog">Clear Log</button>
-            <button @click="initialize">Inirialize</button>
-            <pre id="messagelog" class="messagelog"></pre>
-            -->
         </div>
     </div>
 </template>
-
-<style>
-.messagelog {
-    border: 0.5px solid #888888;
-    min-height: 250px;
-    border-radius: 10px;
-    overflow: auto;
-    font-size: 8pt;
-    padding: 1em;
-}
-</style>
 
 <style scoped>
 div.midi-instrument {

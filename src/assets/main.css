@@ -13,6 +13,8 @@ body.wait * {
     cursor: wait !important;
 }
 
+header { background-color: #3f8f7884; }
+
 #app {
     width: 100%;
     height: 100%;

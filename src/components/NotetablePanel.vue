@@ -70,7 +70,6 @@ div.scroller {
 thead {
     position: sticky;
     top: 0;
-    /* background: var(--color-background); */
     backdrop-filter: blur(8px);
 }
 

@@ -1,7 +1,14 @@
-// HID Handler
+/*
+ *  H I D H A N D L E R
+ *
+ *  Handles HID connections and events.
+ *
+ */
 
 import hidconfig from './hidconfig.js'
+import notify from './notify.js'
 
+// Vendor ids for currently supported gamepads
 const VendorId = Object.freeze({
     Sony: 0x054c,
     Nintendo: 0x057e,
@@ -14,10 +21,12 @@ const Usage = Object.freeze({
     GameControlPage: 0x05,
 })
 
+// Clamps a number.
 Number.prototype.clamp = function (min, max) {
     return Math.min(Math.max(this, min), max)
 }
 
+// Converts a sensor value to an arc value in the range -1 ... +1
 function toArcUnit(value) {
     return ((4 * Math.asin(value.clamp(-1, 1))) / Math.PI).clamp(-1, 1)
 }
@@ -27,7 +36,7 @@ function normalizeStickAxis(value) {
     return (2 * value) / 0xff - 1.0
 }
 
-// Normalizes trigger value 0 ... +1.
+// Normalizes trigger value to a range of 0 ... +1.
 function normalizeTrigger(value) {
     return value / 0xff
 }
@@ -146,7 +155,7 @@ function axisAccessorNinX() {
         const update = value != last
         last = value
         return {
-            value: Math.max(Math.min(value, 1), -1),
+            value: value.clamp(-1, 1),
             update: update,
             label: label,
         }
@@ -162,11 +171,11 @@ function axisAccessorNinY() {
         const byte0 = report.getUint8(byte)
         const byte1 = report.getUint8(byte + 1)
         const vertical = (byte0 >> 4) | (byte1 << 4)
-        const value = (vertical / 2000 - 1) * 1.5
+        const value = (1 - vertical / 2000) * 1.5
         const update = value != last
         last = value
         return {
-            value: Math.max(Math.min(value, 1), -1),
+            value: value.clamp(-1, 1),
             update: update,
             label: label,
         }
@@ -217,20 +226,28 @@ export default class HidHandler {
         device.addEventListener(type, handler)
     }
 
-    // Removes event handlers
+    // Removes event handlers.
     removeEventHandler(device, type, handler) {
         device.removeEventListener(type, handler)
     }
 
     // Handles connections.
-    async connectHandler(event) {
-        console.log(`HID connected: ${event.device.productName}`)
-        // await this.registerDevice(event.device)
+    connectHandler(event) {
+        const name = event.device.productName
+        console.log(`HID connected: ${name}`)
+
+        const options = { body: `${name}` }
+        notify('Input device connected', options)
     }
 
     // Handles disconnections.
     disconnectHandler(event) {
-        console.log(`HID disconnected: ${event.device.productName}`)
+        const name = event.device.productName
+        console.log(`HID disconnected: ${name}`)
+
+        const options = { body: `${name}` }
+        notify('Input device disconnected', options)
+
         const gamepad = this.findGamepad(event.device)
         if (gamepad != null) {
             this.unregisterDevice(gamepad)
@@ -277,6 +294,7 @@ export default class HidHandler {
         this.gamepadManager.updateGamepad(gamepad)
     }
 
+    // Creates accessors for the gamepad.
     createAccessors(gamepad, config) {
         const normalizer = {
             norm1: function (value) {
@@ -317,9 +335,15 @@ export default class HidHandler {
                 case 'dpdown':
                 case 'dpleft':
                 case 'dpright':
-                    gamepad.deviceAccessor.buttonAccessors.push(
-                        dpadAccessor(key.byte, key.values, key.name),
-                    )
+                    if (key.type == null) {
+                        gamepad.deviceAccessor.buttonAccessors.push(
+                            dpadAccessor(key.byte, key.values, key.name),
+                        )
+                    } else if (key.type == 'nin') {
+                        gamepad.deviceAccessor.buttonAccessors.push(
+                            buttonAccessor(key.byte, key.bit, key.name),
+                        )
+                    }
                     break
                 case 'lefttrigger':
                 case 'righttrigger':
@@ -371,7 +395,7 @@ export default class HidHandler {
         })
     }
 
-    // Called by the system when an input arrives.
+    // Called by the system when an input event arrives.
     inputReport(event) {
         const gamepad = this.findGamepad(event.device)
         if (gamepad != null) {
@@ -379,6 +403,7 @@ export default class HidHandler {
         }
     }
 
+    // Configures the device.
     async configureDevice(device) {
         const connectionType = this.getConnectionType(device)
         try {
@@ -405,6 +430,7 @@ export default class HidHandler {
         return connectionType
     }
 
+    // Confugures the gamepad.
     async configureGamepad(gamepad) {
         const connection = await this.configureDevice(gamepad.device)
 
@@ -412,6 +438,7 @@ export default class HidHandler {
         if (config == null) {
             console.log(`Gamepad "${gamepad.id}" is not supported.`)
             this.sendGamepadEvent('connectgamepad', {
+                name: gamepad.id,
                 vendorId: gamepad.vendorId,
                 productId: gamepad.productId,
             })
@@ -421,6 +448,7 @@ export default class HidHandler {
         return config
     }
 
+    // Sends a custom gamepad event.
     sendGamepadEvent(eventType, detail) {
         window.dispatchEvent(
             new CustomEvent(eventType, {
@@ -462,6 +490,7 @@ export default class HidHandler {
         await device.sendReport(outputReportID, new Uint8Array(data))
     }
 
+    // Parses the device input collections.
     parseCollections(device) {
         for (const collection of device.collections) {
             // A HID collection includes usage, usage page, reports, and subcollections.
@@ -537,6 +566,7 @@ export default class HidHandler {
         return connectionType
     }
 
+    // Reads feature report 5.
     async readFeatureReport05(device) {
         // By default, bluetooth-connected DualSense only sends input report 0x01 which omits motion and touchpad data.
         // Reading feature report 0x05 causes it to start sending input report 0x31.
@@ -547,14 +577,15 @@ export default class HidHandler {
         console.log('Feature report 5:', featureReport)
     }
 
+    // Finds the gamepad object from the device.
     findGamepad(device) {
         return this.gamepads.find((gamepad) => {
             return device === gamepad.device
         })
     }
 
+    // Registers an imput device.
     async registerDevice(device) {
-        console.log('device', device)
         // Open device
         if (!device.opened) {
             await device.open()
@@ -584,9 +615,13 @@ export default class HidHandler {
             setTimeout(() => {
                 this.gamepadManager.addGamepad(gamepad)
             }, 100)
+
+            const options = { body: `${gamepad.id}` }
+            notify('Input device connected', options)
         }
     }
 
+    // Unregisters an imput device.
     unregisterDevice(gamepad) {
         const gamepadIndex = this.gamepadManager.findGamepadIndex(gamepad)
 
@@ -617,7 +652,6 @@ export default class HidHandler {
 
     // Requests an input device.
     async requestDevice() {
-        console.log('requestDevice')
         try {
             const devices = await navigator.hid.requestDevice({
                 filters: [

@@ -1,9 +1,8 @@
 //
 //  Turn.swift
-//  Espressivo
+//  Adapted code from the Xcode project.
 //
-//  Created by Hansruedi Bär on 17.09.23.
-//
+
 import Ornament from './Ornament.js'
 
 /// Creates turn notes on the fly.

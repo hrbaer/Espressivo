@@ -1,8 +1,6 @@
 //
 //  Music.js
-//  Espressivo
-//
-//  Created by Hansruedi Bär on 22.06.23.
+//  Adapted code from the Xcode project.
 //
 //  Calculation of diatones.
 //  Used for appropriate performance of ornaments.

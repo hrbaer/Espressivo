@@ -1,8 +1,6 @@
 //
-//  Mordent.swift
-//  Espressivo
-//
-//  Created by Hansruedi Bär on 17.09.23.
+//  Mordent.js
+//  Adapted code from the Xcode project.
 //
 
 import Ornament from './Ornament.js'

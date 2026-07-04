@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-const props = defineProps({ select: Array })
-const index = ref(0)
+const props = defineProps({ select: Array, index: Number })
+const index = ref(props.index)
 
 const emit = defineEmits(['switch-handler', 'register-switcher'])
 

@@ -108,6 +108,7 @@ div.entry {
     padding-left: 1em;
     padding-right: 1em;
     display: flex;
+    font-feature-settings: 'tnum';
 }
 
 div.sticky {

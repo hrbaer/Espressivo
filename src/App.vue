@@ -106,6 +106,7 @@ let clock
 let workTree
 let currentWork
 let counter
+let allowConverterService = false
 
 provide('progress', progress)
 provide('svg', svg)
@@ -146,6 +147,7 @@ repertoireURL.value = defaultRepertoire
 onBeforeMount(() => {
     initializeVerovio()
     initializeMidi()
+    initializePlayer()
 })
 
 onMounted(() => {
@@ -156,7 +158,6 @@ onMounted(() => {
     )
     console.log(`Vue version ${version}`)
 
-    initializePlayer()
     initializeDispatcher()
 
     initializeGamepads()
@@ -222,8 +223,8 @@ function sizeChanged(event) {
 
 // Called when app switches between foreground and background.
 function visibilityChanged() {
-    const state = document.hidden ? 'hidden' : 'visible'
-    console.log(`App is ${state}`)
+    // const state = document.hidden ? 'hidden' : 'visible'
+    // console.log(`App is ${state}`)
     player.value?.sleep(document.hidden)
 }
 
@@ -248,10 +249,11 @@ function resetLayout() {
 
 // Starts a gamepad connection.
 function connectGamepad(event) {
-    console.log('connectGamepad', event)
     const gamepad = gamepadHandler.value.findGamepad(event.detail)
     if (gamepad != null) {
         gamepadHandler.value.connectGamepad(gamepad)
+    } else {
+        alert(`Gamepad "${event.detail.name}" cannot be connected.`)
     }
 }
 
@@ -396,6 +398,10 @@ function initializePlayer() {
     player.value = new Player()
     player.value.setMidiIO(midiIO.value)
     player.value.setPlayerDisplay(playerDisplay)
+    const ornamentType = localStorage.getItem('ornamentType')
+    if (ornamentType != null) {
+        player.value.setOrnamentType(ornamentType)
+    }
 }
 
 // Call this function to display "count-in" info.
@@ -442,7 +448,7 @@ async function getPages() {
     const pages = verovioToolkit.getPageCount()
     var pageArray = []
     for (let page = 1; page <= pages; page++) {
-        console.log(`Loading page ${page} of ${pages}`)
+        // console.log(`Loading page ${page} of ${pages}`)
         // progress.value = Math.round(100 * (page / pages))
         await nextTick()
         pageArray.push(`<!-- Page ${page} -->`)
@@ -461,7 +467,7 @@ function parseScore(name) {
         addLog()
         if (data != null) {
             getPages()
-            const noteData = meiParser(data)
+            const noteData = meiParser(data, name)
             publishNoteData(noteData)
             mei.value = data
         }
@@ -484,11 +490,19 @@ function loadData(string) {
 // Converts a score file.
 // Uses a converter service from the server.
 function convertScore(buffer, name) {
-    const service = new ConverterService()
-    service.convert(buffer, 'mscore').then((content) => {
-        loadZipDataBuffer(content)
-        parseScore(name)
-    })
+    // Ask once for permission.
+    if (allowConverterService == false) {
+        allowConverterService = window.confirm('Allow using the Web-based converter service?')
+        queryConverterService()
+    }
+    if (allowConverterService == true) {
+        const service = new ConverterService()
+        // Pass the path to the converter.
+        service.convert(buffer, 'mscore').then((content) => {
+            loadZipDataBuffer(content)
+            parseScore(name)
+        })
+    }
 }
 
 // Loads score data from a buffer considering different data formats.
@@ -522,13 +536,13 @@ async function getDataFromURL(url) {
         if (!response.ok) {
             throw new Error(`Response status: ${response.status}`)
         }
-        if (['mxl', 'mscz'].includes(fileExtension(url))) {
+        if (isBinaryScoreFile(url)) {
             return await response.arrayBuffer()
         } else {
             return await response.text()
         }
     } catch (error) {
-        console.error(error.message)
+        alert(error.message)
     }
 }
 
@@ -540,13 +554,18 @@ function readFile(file) {
         loadFromBuffer(content, file.name)
     }
     reader.onerror = () => {
-        console.log('Error reading the file. Please try again.', 'error')
+        alert(`Error reading file "${file.name}". Please try again.`)
     }
-    if (['mxl', 'mscz'].includes(fileExtension(file.name))) {
+    if (isBinaryScoreFile(file.name)) {
         reader.readAsArrayBuffer(file)
     } else {
         reader.readAsText(file)
     }
+}
+
+// Checks if file is a binary score file.
+function isBinaryScoreFile(filename) {
+    return ['mxl', 'mscz'].includes(fileExtension(filename))
 }
 
 // Publishes note data.
@@ -843,7 +862,7 @@ function selectCurrentLevel(name) {
 function queryConverterService() {
     const service = new ConverterService()
     service.getVersion().then((version) => {
-        console.log('Version:', version)
+        console.log(version)
     })
 }
 
@@ -954,7 +973,7 @@ function navigateStep(step) {
     if (index != -1) {
         const nextRoute = routes[index + step]
         if (nextRoute != null) {
-            console.log('next route:', nextRoute)
+            // console.log('next route:', nextRoute)
             router.push({ path: nextRoute.path })
         }
     }
@@ -982,6 +1001,7 @@ function navigateRight() {
 
 // Sets the ornament type (Barock or Classic)
 function setOrnamentType(ornamentType) {
+    localStorage.setItem('ornamentType', ornamentType)
     player.value.setOrnamentType(ornamentType)
 }
 

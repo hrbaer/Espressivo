@@ -9,8 +9,8 @@ import SwitchButton from './SwitchButton.vue'
 
 const route = useRoute()
 
+const player = inject('player')
 const hidHandler = inject('hidHandler')
-const gamepadHandler = inject('gamepadHandler')
 const motionSensor = inject('motionSensor')
 
 const emit = defineEmits([
@@ -34,12 +34,16 @@ const isRunning = inject('isRunning')
 const leftSidepanelWidths = ['165px', '0px']
 const leftSidepanelVarname = '--left-sidebar'
 const musicStyle = ['Barock', 'Classic']
+const ornamentTypes = ['barock', 'classic']
+const multiChannel = ref(false)
 
 var switchHandler
+var ornamentIndex = 0
 
 // lifecycle hooks
 onMounted(() => {
     window.addEventListener('clickhandler', handleClick)
+    ornamentIndex = ornamentTypes.indexOf(player.value.ornamentType)
 })
 
 onUnmounted(() => {
@@ -62,7 +66,9 @@ function registerSwitchHandler(handler) {
 
 function handleClick(event) {
     if (event.detail == 'switchstyle') {
-        switchHandler()
+        if (switchHandler != null) {
+            switchHandler()
+        }
     }
 }
 
@@ -113,8 +119,9 @@ function openFiles_(event) {
 }
 
 function switchStyle(index) {
-    const ornamentType = ['barock', 'classic'][index]
+    const ornamentType = ornamentTypes[index]
     emit('set-ornament-type', ornamentType)
+    ornamentIndex = index
 }
 
 function setColorStyle(_event) {
@@ -127,12 +134,21 @@ function colorStyleIcon() {
     return colorStyle.value ? 'IconColorPaletteBW' : 'IconColorPaletteColor'
 }
 
+function setMultiChannel() {
+    multiChannel.value = !multiChannel.value
+    player.value.setMultiChannel(multiChannel.value)
+}
+
+function multiChannelIcon() {
+    return multiChannel.value ? 'IconMultiChannel' : 'IconSingleChannel'
+}
+
 function openTransposeDialog() {
     emit('open-transpose-dialog')
 }
 
 const manuallyConnect = computed(() => {
-    return hidHandler.value.hasHID && gamepadHandler.value.hasGamepads
+    return hidHandler.value.hasHID
 })
 
 const sensorButtonTitle = computed(() => {
@@ -227,6 +243,7 @@ function connectMotionSensor() {
                         @switch-handler="switchStyle"
                         @register-switcher="registerSwitchHandler"
                         :select="musicStyle"
+                        :index="ornamentIndex"
                     />
                 </div>
                 <div
@@ -239,16 +256,25 @@ function connectMotionSensor() {
                 <div class="icon-container" @click="openTransposeDialog" title="Transpose score">
                     <SvgIcon name="IconArrowUpArrowDown" class="toolbar-icon" />
                 </div>
+
+                <div
+                    class="icon-container fixed-width"
+                    @click="setMultiChannel"
+                    title="Switch between single-channel and multi-channel MIDI output"
+                >
+                    <SvgIcon :name="multiChannelIcon()" class="toolbar-icon" />
+                </div>
+
             </div>
             <div v-if="showGamepadTools">
                 <div
                     v-if="manuallyConnect"
                     class="icon-button"
-                    title="Connect Gamepad"
+                    title="Select Gamepad"
                     @click="connectHid"
                 >
                     <SvgIcon name="IconGamepad" class="toolbar-icon" />
-                    <span class="info">Connect gamepad</span>
+                    <span class="info">Select gamepad</span>
                 </div>
                 <div class="icon-button" title="Connect motion sensor" @click="connectMotionSensor">
                     <SvgIcon name="IconRotate3d" class="toolbar-icon" />

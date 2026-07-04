@@ -115,7 +115,7 @@
   {
     "vendorId": "057e",
     "productId": "2009",
-    "name": "Nintendo Switch USB",
+    "name": "Nintendo Switch",
     "keys": [
       { "name": "x", "byte": 2, "bit": 1 },
       { "name": "a", "byte": 2, "bit": 3 },
@@ -125,17 +125,22 @@
       { "name": "rightshoulder", "byte": 2, "bit": 6 },
       { "name": "lefttrigger", "byte": 4, "bit": 7 },
       { "name": "righttrigger", "byte": 2, "bit": 7 },
-      { "name": "leftx", "byte": 5, "type": "nin-x" },
-      { "name": "lefty", "byte": 6, "type": "nin-y" },
-      { "name": "rightx", "byte": 8, "type": "nin-x" },
-      { "name": "righty", "byte": 9, "type": "nin-y" },
       { "name": "back", "byte": 3, "bit": 0 },
       { "name": "start", "byte": 3, "bit": 1 },
       { "name": "leftstick", "byte": 3, "bit": 3 },
       { "name": "rightstick", "byte": 3, "bit": 2 },
       { "name": "guide", "byte": 3, "bit": 4 },
+      { "name": "dpup", "byte": 4, "bit": 1, "type": "nin" },
+      { "name": "dpdown", "byte": 4, "bit": 0, "type": "nin" },
+      { "name": "dpleft", "byte": 4, "bit": 3, "type": "nin" },
+      { "name": "dpright", "byte": 4, "bit": 2, "type": "nin" },
+      { "name": "leftx", "byte": 5, "type": "nin-x" },
+      { "name": "lefty", "byte": 6, "type": "nin-y" },
+      { "name": "rightx", "byte": 8, "type": "nin-x" },
+      { "name": "righty", "byte": 9, "type": "nin-y" },
       { "name": "accelx", "byte": 15, "bits": 16, "big": false, "normalize": "norm2" },
-      { "name": "accely", "byte": 13, "bits": 16, "big": false, "normalize": "norm2neg" }
+      { "name": "accely", "byte": 13, "bits": 16, "big": false, "normalize": "norm2neg" },
+      { "name": "battery", "byte": 1 }
     ]
   },
   {
@@ -160,6 +165,38 @@
       { "name": "lefty", "byte": 1 },
       { "name": "rightx", "byte": 2 },
       { "name": "righty", "byte": 3 }
+    ]
+  },
+  {
+    "vendorId": "2dc8",
+    "productId": "6006",
+    "name": "8BitDo Pro 2",
+    "keys": [
+      { "name": "x", "byte": 7, "bit": 4 },
+      { "name": "a", "byte": 7, "bit": 1 },
+      { "name": "b", "byte": 7, "bit": 0 },
+      { "name": "y", "byte": 7, "bit": 3 },
+      { "name": "leftshoulder", "byte": 7, "bit": 6 },
+      { "name": "rightshoulder", "byte": 7, "bit": 7 },
+      { "name": "lefttrigger", "byte": 0, "bit": 0, "trigger": 6 },
+      { "name": "righttrigger", "byte": 0, "bit": 1, "trigger": 5 },
+      { "name": "back", "byte": 8, "bit": 2 },
+      { "name": "start", "byte": 8, "bit": 3 },
+      { "name": "leftstick", "byte": 8, "bit": 5 },
+      { "name": "rightstick", "byte": 8, "bit": 6 },
+      { "name": "guide", "byte": 8, "bit": 4 },
+
+      { "name": "dpup", "byte": 0, "values": [0, 1, 7] },
+      { "name": "dpdown", "byte": 0, "values": [3, 4, 5] },
+      { "name": "dpleft", "byte": 0, "values": [5, 6, 7] },
+      { "name": "dpright", "byte": 0, "values": [1, 2, 3] },
+
+      { "name": "leftx", "byte": 1 },
+      { "name": "lefty", "byte": 2 },
+      { "name": "rightx", "byte": 3 },
+      { "name": "righty", "byte": 4 },
+      { "name": "accelx", "byte": 16, "bits": 16, "big": true, "normalize": "norm2" },
+      { "name": "accely", "byte": 14, "bits": 16, "big": true, "normalize": "norm2neg" }
     ]
   }
 ]

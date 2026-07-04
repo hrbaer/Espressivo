@@ -1,13 +1,18 @@
 /*
- * C L O C K
+ *  C L O C K
+ *
+ *  The clock used to drive the gamepad-driven MIDI player.
+ *
  */
 
 export default class Clock {
+    // Passes the callback function.
     constructor(clock) {
         this.clock = clock
         this.running = false
     }
 
+    // Internally runs the clock.
     run() {
         const now = performance.now()
         const deltaTime = now - this.startTime
@@ -18,6 +23,7 @@ export default class Clock {
         }
     }
 
+    // Starts the clock.
     start() {
         this.running = true
         this.counter = 0
@@ -25,6 +31,7 @@ export default class Clock {
         this.run()
     }
 
+    // Stops the clock.
     stop() {
         this.running = false
     }

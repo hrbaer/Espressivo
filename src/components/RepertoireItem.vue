@@ -43,7 +43,6 @@ async function chooseScore(scoreFile) {
             >
                 <div class="index">
                     {{ index + 1 }}
-                    <!-- DocumentIcon / -->
                 </div>
                 {{ scoreFile.name }}
             </div>
@@ -72,6 +71,7 @@ div.entry {
     padding-right: 1em;
     display: flex;
     align-items: first baseline;
+    font-feature-settings: 'tnum';
 }
 
 div.entry.selected {

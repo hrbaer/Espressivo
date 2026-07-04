@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onUnmounted, inject, ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import SvgIcon from './SvgIcon.vue'
 
 const transpose = ref('')

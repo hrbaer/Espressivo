@@ -82,6 +82,8 @@ export default class Player {
         this.numRepeats = 2
         this.endingNums = new Set()
         this.currentSection = 0
+
+        this.multiChannel = false
     }
 
     // Sets the parsed note data.
@@ -711,7 +713,6 @@ export default class Player {
     setOrnamentType(ornamentType) {
         if (ornamentTypes.includes(ornamentType)) {
             this.ornamentType = ornamentType
-            console.log(ornamentType)
         }
     }
 
@@ -996,16 +997,23 @@ export default class Player {
         }
     }
 
+    // Switches between single and multi-channel MIDI output.
+    setMultiChannel(multiChannel) {
+        this.multiChannel = multiChannel
+    }
+
     // Plays a note
     playNote(note) {
         const velocity = Math.round(this.getVelocity(note))
-        this.midiIO?.noteOn(note.midi, 0, velocity)
+        const channel = this.multiChannel ? note.staff : 0
+        this.midiIO?.noteOn(note.midi, channel, velocity)
         this.currentNote = note
     }
 
     // Stops a note
     stopNote(note) {
-        this.midiIO?.noteOff(note.midi, 0)
+        const channel = this.multiChannel ? note.staff : 0
+        this.midiIO?.noteOff(note.midi, channel)
     }
 
     // Turns the sound off.

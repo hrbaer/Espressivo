@@ -1,13 +1,13 @@
 /*
-
-About this code
-
-See:
-npm view cubic-spline-interpolate
-
-This code seems to be unpublished.
-
-*/
+ *
+ * About this code
+ *
+ * See:
+ * npm view cubic-spline-interpolate
+ *
+ * This code seems to be unpublished.
+ *
+ */
 
 export default function cubicSplineInterpolate(x_array, y_array) {
     let k_array = getNaturalKs(x_array, y_array)

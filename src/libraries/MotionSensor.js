@@ -152,7 +152,7 @@ export default class MotionSensor {
         if (this.sensor == null) {
             return
         }
-        // console.log('track acceleration:', acceleration)
+        console.log('track acceleration:', acceleration)
         this.sensor.sensors.splice(0)
 
         const transformedAcceleration = this.transformAcceleration(acceleration)

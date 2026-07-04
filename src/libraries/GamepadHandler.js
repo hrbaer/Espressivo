@@ -1,6 +1,12 @@
-// Gamepad
+/*
+ *  G A M E P A D H A N D L E R
+ *
+ *  Handles gamepad connections and events.
+ *
+ */
 
 import keyLabels from './keyLabels.js'
+import notify from './notify.js'
 
 // Creates a button accessor.
 function buttonAccessor() {
@@ -72,6 +78,10 @@ export default class Gamepad {
             e.gamepad.buttons.length,
             e.gamepad.axes.length,
         )
+
+        const options = { body: `${e.gamepad.id}` }
+        notify('Gamepad attached', options)
+
         if (window.navigator.hid == null) {
             this.connectGamepad(e.gamepad)
         }
@@ -91,6 +101,8 @@ export default class Gamepad {
         const gamepad = e.gamepad
 
         console.log('Gamepad disconnected', gamepad.id)
+        const options = { body: `${gamepad.id}` }
+        notify('Gamepad detached', options)
 
         const index = this.gamepadList.findIndex((pad) => {
             return gamepad.index == pad.index
@@ -104,6 +116,11 @@ export default class Gamepad {
 
         const gamepadIndex = this.gamepadManager.findGamepadIndex(gamepad)
         this.dispatcher.clearGamepad(gamepadIndex)
+
+        if (window.navigator.hid == null) {
+            const options = { body: `${e.gamepad.id}` }
+            notify('Gamepad detached', options)
+        }
     }
 
     createAccessors(keyLabels) {

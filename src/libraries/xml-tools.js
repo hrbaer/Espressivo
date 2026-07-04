@@ -1,12 +1,7 @@
 /*
- * X M L   T O O L S.
- * *
- * Author: H. R. Baer
+ *  X M L   T O O L S.
  *
- * History:
- *
- * 2021-10-11
- * Created
+ *  Collection of methods to get XML content.
  *
  */
 

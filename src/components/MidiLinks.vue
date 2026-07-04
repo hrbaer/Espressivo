@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onUnmounted, inject } from 'vue'
+import { onMounted, onUnmounted } from 'vue'
 
 onMounted(() => {})
 

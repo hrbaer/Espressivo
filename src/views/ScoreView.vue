@@ -1,10 +1,10 @@
 <script setup>
-import ScoreItem from '../components/ScoreItem.vue'
+import ScoreDisplay from '../components/ScoreIDisplay.vue/index.js'
 import RepertoireItem from '../components/RepertoireItem.vue'
 </script>
 
 <template>
-    <ScoreItem class="score-view" />
+    <ScoreDisplay class="score-view" />
     <RepertoireItem class="repertoire-item" />
 </template>
 

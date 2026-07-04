@@ -1,10 +1,10 @@
 <script setup>
-import ScoreItem from '../components/ScoreItem.vue'
+import ScoreDisplay from '../components/ScoreIDisplay.vue/index.js'
 import LivePanel from '../components/LivePanel.vue'
 </script>
 
 <template>
-    <ScoreItem class="score-view" />
+    <ScoreDisplay class="score-view" />
     <LivePanel class="live-panel" />
 </template>
 

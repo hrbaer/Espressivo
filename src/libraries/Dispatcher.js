@@ -1,7 +1,10 @@
 /*
- * D I S P A T C H E R
+ *  D I S P A T C H E R
  *
- * 2026-03-21
+ *  Receives, processes and redirects gamepad events.
+ *
+ *  2026-03-21
+ *
  */
 
 import SplineInterpolator from './cubic-spline-interpolate.js'
@@ -24,6 +27,7 @@ const articulationNKeyPointsY = [0.0, 12.5, 25.0, 37.5, 50.0]
 const modwheelKeyPointsX = [-1.0, -0.5, 0.0, 0.5, 1.0]
 const modwheelKeyPointsY = [0.0, 31.0, 63.0, 95.0, 127.0]
 
+// Common button event redirection.
 const ButtonDispatcher = {
     x: 'previousTitle',
     a: 'startStop',
@@ -39,6 +43,7 @@ const ButtonDispatcher = {
     rightstick: 'controlStyle',
 }
 
+// Grand staff event redirection.
 const grandStaffDispatcher = {
     lefttrigger: 'controlArticulationLowerStaff',
     righttrigger: 'controlArticulationUpperStaff',
@@ -48,6 +53,7 @@ const grandStaffDispatcher = {
     righty: 'controlTempoInverse',
 }
 
+// Grand staff event redirection including sensor events.
 const grandStaffSensorDispatcher = {
     lefttrigger: 'controlArticulationLowerStaff',
     righttrigger: 'controlArticulationUpperStaff',
@@ -59,6 +65,7 @@ const grandStaffSensorDispatcher = {
     accely: 'controlTempo',
 }
 
+// Four staff event redirection.
 const fourStaffSensorDispatcher = {
     lefttrigger: 'controlArticulationStaffs34',
     righttrigger: 'controlArticulationStaffs12',
@@ -72,6 +79,7 @@ const fourStaffSensorDispatcher = {
 
 var dispatcher = ButtonDispatcher
 
+// Creates the dispatcher object.
 function createDispatcher(name) {
     switch (name) {
         case 'grandStaffDispatcher':
@@ -93,6 +101,7 @@ export default class Dispatcher {
         this.initializeInterpolators()
     }
 
+    // Initializes interpolators for continuous values.
     initializeInterpolators() {
         this.tempoInterpolator = SplineInterpolator(tempoKeyPointsX, tempoKeyPointsY)
         this.velocityInterpolator = SplineInterpolator(velocityKeyPointsX, velocityKeyPointsY)
@@ -108,6 +117,7 @@ export default class Dispatcher {
         this.modwheelInterpolator = SplineInterpolator(modwheelKeyPointsX, modwheelKeyPointsY)
     }
 
+    // Dispatches incoming events.
     dispatch(index, label, value) {
         const name = dispatcher[label]
         if (name == null) {
@@ -156,12 +166,14 @@ export default class Dispatcher {
         }
     }
 
+    // Gets the sensors from a gamepad.
     getSensors(gamepads) {
         return gamepads.filter((gamepad) => {
             return gamepad.sensors != null
         })
     }
 
+    // Configures the dispatcher.
     configure(gamepads, meta) {
         const numGamepads = gamepads.length
         const numStaffs = meta.numStaffs
@@ -186,65 +198,80 @@ export default class Dispatcher {
         }
     }
 
+    // Passes the 'previous title' event.
     previousTitle() {
         this.controller.previousTitle()
     }
 
+    // Passes the 'start/stop' event.
     startStop() {
         this.controller.startStop()
     }
 
+    // Passes the 'next title' event.
     nextTitle() {
         this.controller.nextTitle()
     }
 
+    // Passes the 'rewind' event.
     rewindTitle() {
         this.controller.rewindTitle()
     }
 
+    // Passes the 'navigate up' event.
     navigateUp() {
         this.controller.navigateUp()
     }
 
+    // Passes the 'navigate down' event.
     navigateDown() {
         this.controller.navigateDown()
     }
 
+    // Passes the 'navigate left' event.
     navigateLeft() {
         this.controller.navigateLeft()
     }
 
+    // Passes the 'navigate right' event.
     navigateRight() {
         this.controller.navigateRight()
     }
 
+    // Reserved for later event.
     reserved() {
         console.navigateUp('reserved')
     }
 
+    // Controls the velocity.
     controlVelocity(index, value) {
         const velocity = this.velocityInterpolator(value)
         this.player.controlVelocity(velocity)
     }
 
+    // Controls the tempo in inverse order.
     controlTempoInverse(index, value) {
         this.controlTempo(index, -value)
     }
 
+    // Controls the tempo.
     controlTempo(_index, value) {
         const tempo = this.tempoInterpolator(value)
         this.player.controlTempo(tempo)
     }
 
+    // Controls the velocity for a given staff.
     controlVelocityStaff(staff, value) {
         const velocity = this.velocityNInterpolator(value)
         this.player.controlVelocityStaff(velocity, staff)
     }
 
+    // Controls the velocity for a given staff and voice.
     controlVelocityStaffVoice(staff, voice, velocity) {
         this.player.controlVelocityStaffVoice(velocity, staff, voice)
     }
 
+    // Controls the velocity of voices 2 and 4 for the lovwer staff.
     controlVelocityLowerStaffVoices24(index, value) {
         const staff = 2 * index + 2
         const velocity = this.velocityNInterpolator(value)
@@ -252,6 +279,7 @@ export default class Dispatcher {
         this.controlVelocityStaffVoice(staff, 4, Math.max(0, -velocity))
     }
 
+    // Controls the velocity of voices 1 and 3 for the lower staff.
     controlVelocityLowerStaffVoices13(index, value) {
         const staff = 2 * index + 2
         const velocity = this.velocityNInterpolator(value)
@@ -259,6 +287,7 @@ export default class Dispatcher {
         this.controlVelocityStaffVoice(staff, 1, Math.max(0, -velocity))
     }
 
+    // Controls the velocity of voices 2 and 4 for the upper staff.
     controlVelocityUpperStaffVoices24(index, value) {
         const staff = 2 * index + 1
         const velocity = this.velocityNInterpolator(value)
@@ -266,6 +295,7 @@ export default class Dispatcher {
         this.controlVelocityStaffVoice(staff, 4, Math.max(0, -velocity))
     }
 
+    // Controls the velocity of voices 1 and 3 for the upper staff.
     controlVelocityUpperStaffVoices13(index, value) {
         const staff = 2 * index + 1
         const velocity = this.velocityNInterpolator(value)
@@ -273,6 +303,7 @@ export default class Dispatcher {
         this.controlVelocityStaffVoice(staff, 1, Math.max(0, -velocity))
     }
 
+    // Controls the velocity of voice 1 of staff 1 and 2.
     controlVelocityStaffs12Voice1(_index, value) {
         const velocity = this.velocityNInterpolator(value)
         if (value > 0) {
@@ -284,6 +315,7 @@ export default class Dispatcher {
         }
     }
 
+    // Controls the velocity of voice 2 of staff 1 and 2.
     controlVelocityStaffs12Voice2(_index, value) {
         const velocity = this.velocityNInterpolator(value)
         if (value > 0) {
@@ -295,65 +327,79 @@ export default class Dispatcher {
         }
     }
 
+    // Controls the velocity of staff 1.
     controlVelocityStaff1(_index, value) {
         this.controlVelocityStaff(1, -value)
     }
 
+    // Controls the velocity of staff 2.
     controlVelocityStaff2(_index, value) {
         this.controlVelocityStaff(2, value)
     }
 
+    // Controls the velocity of staff 3.
     controlVelocityStaff3(_index, value) {
         this.controlVelocityStaff(3, -value)
     }
 
+    // Controls the velocity of staff 4.
     controlVelocityStaff4(_index, value) {
         this.controlVelocityStaff(4, value)
     }
 
+    // Controls the articulation of a given staff.
     controlArticulationStaff(staff, value) {
         const articulation = this.articulationNInterpolator(value)
         this.player.controlArticulationStaff(articulation, staff)
     }
 
+    // Controls the articulation of a staff 1 and 2.
     controlArticulationStaffs12(staffs, value) {
         this.controlArticulationStaff(1, value)
         this.controlArticulationStaff(2, value)
     }
 
+    // Controls the articulation of a staff 3 and 4.
     controlArticulationStaffs34(staffs, value) {
         this.controlArticulationStaff(3, value)
         this.controlArticulationStaff(4, value)
     }
 
+    // Controls the articulation of the lower staff.
     controlArticulationLowerStaff(index, value) {
         this.controlArticulationStaff(2 * index + 2, value)
     }
 
+    // Controls the articulation of the upper staff.
     controlArticulationUpperStaff(index, value) {
         this.controlArticulationStaff(2 * index + 1, value)
     }
 
+    // Controls the pedal.
     controlPedal(index, value) {
         this.player.controlPedal(index, value)
     }
 
+    // Controls the sustain pedal.
     controlSustainPedal(_index, value) {
         this.player.controlPedal(0, value)
     }
 
+    // Sets the musical style.
     controlStyle(_index, value) {
         if (value == 1) {
             this.sendClick('switchstyle')
         }
     }
 
+    // Reloads the score.
     reloadScore(_index, value) {
         if (value == 1) {
             this.sendClick('reloadscore')
         }
     }
 
+    // Sends a click event.
     sendClick(detail) {
         window.dispatchEvent(
             new CustomEvent('clickhandler', {
@@ -364,7 +410,6 @@ export default class Dispatcher {
 
     // Handle gamepad button events.
     buttonPressed(index, label, pressed, value) {
-        // console.log(`Button ${index} ${pressed ? 'pressed' : 'released'} ${label}`)
         switch (label) {
             case 'x':
             case 'a':
@@ -418,7 +463,8 @@ export default class Dispatcher {
         }
     }
 
-    clearGamepad(index) {
+    // Clears the gamepad
+    clearGamepad(_index) {
         this.player.clearControllers()
     }
 }

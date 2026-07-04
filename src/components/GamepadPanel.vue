@@ -9,23 +9,11 @@ const buttons = []
 const axes = []
 const sensors = []
 
-function buttonEvent(gamepad, index, value, pressed) {
-    // console.log('button', gamepad.index, index, value, pressed)
-}
-
-function axisEvent(gamepad, index, value) {
-    // console.log('axis', index, value)
-}
-function sensorEvent(gamepad, index, value) {
-    // console.log('sensor', index, value)
-}
-
 function handleButton(gamepad, button, index) {
     if (buttons[index] == null) {
         buttons[index] = 0
     }
     if (button.value != buttons[index]) {
-        buttonEvent(gamepad, index, button.value, button.pressed)
         buttons[index] = button.value
     }
     return button.value
@@ -36,7 +24,6 @@ function handleAxis(gamepad, axis, index) {
         axes[index] = 0
     }
     if (axis != axes[index]) {
-        axisEvent(gamepad, index, axis)
         axes[index] = axis
     }
     return axis
@@ -47,7 +34,6 @@ function handleSensor(gamepad, sensor, index) {
         sensors[index] = 0
     }
     if (sensor != sensors[index]) {
-        sensorEvent(gamepad, index, sensor)
         sensors[index] = sensor
     }
     return sensor
@@ -83,12 +69,24 @@ function showLivePanel() {
 <template>
     <div class="gamepad-panel">
         <div class="gamepad-view" @click="showLivePanel">
+            <template v-if="gamepads.length == 0">
+                <p>
+                    There is currently no gamepad connected.<br />
+                    Proceed as listed below:
+                </p>
+                <ol>
+                    <li>Attach a gamepad</li>
+                    <li>Press any button or stick of the gamepad</li>
+                    <li>Select the gamepad from the menu above</li>
+                </ol>
+            </template>
             <div v-for="gamepad in gamepads" :key="gamepad.index">
                 <h2>
                     {{ gamepad.id }}
                 </h2>
                 <div v-if="gamepad.productId != null">
-                    Vendor Id: {{ getVendorId(gamepad) }}, Product Id: {{ getProductId(gamepad) }}
+                    Vendor Id: {{ getVendorId(gamepad) }}, Product Id:
+                    {{ getProductId(gamepad) }}
                 </div>
                 <div v-if="gamepad.buttons.length > 0">
                     <h3>Buttons</h3>
@@ -107,7 +105,6 @@ function showLivePanel() {
                     <h3>Axes</h3>
                     <div class="row">
                         <div class="field" v-for="(axis, index) in gamepad.axes" :key="index">
-                            <!-- div class="index">{{ index + 1 }}</div -->
                             <div class="label">{{ axis.label ?? index }}</div>
                             <SimpleMeter
                                 :min="-1"
@@ -162,9 +159,6 @@ div.field {
     margin: 5px;
     background-color: rgba(128, 128, 128, 0.1);
     border-radius: 7px;
-}
-
-div.index {
 }
 
 div.label {
