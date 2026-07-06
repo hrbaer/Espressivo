@@ -1,3 +1,0 @@
-Accessing Joy Con motion sensor
-
-https://github.com/tomayac/joy-con-webhid/tree/main
